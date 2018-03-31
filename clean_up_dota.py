@@ -27,13 +27,17 @@ def main(args):
 
     for id_ in tqdm(ids):
         anno_file = f'{args.data_dir}/annotations/{id_}.txt'
+        image_file = f'{fpath}/{id_}.png'
         bbox, labels, difficult = extract_annotations(anno_file, False)
 
-        if len(bbox) != 0:
-            shutil.copyfile(f'{fpath}/{id_}.png',
-                            f'{out}/images/{id_}.png')
-            shutil.copyfile(anno_file,
-                            f'{out}/annotations/{id_}.txt')
+        # exclude too large images.
+        if os.path.getsize(image_file) < 1e+7:
+            # exclude no bounding box images.
+            if len(bbox) != 0:
+                shutil.copyfile(image_file,
+                                f'{out}/images/{id_}.png')
+                shutil.copyfile(anno_file,
+                                f'{out}/annotations/{id_}.txt')
 
 
 if __name__ == '__main__':
