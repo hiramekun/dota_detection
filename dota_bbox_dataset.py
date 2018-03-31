@@ -100,6 +100,7 @@ class DotaBboxDataset(chainer.dataset.DatasetMixin):
         """
 
         id_ = self.ids[i]
+        print(id_)
         fname = f'{self.data_dir}/{self.split}/annotations/{id_}.txt'
 
         with open(fname) as f:
@@ -143,8 +144,11 @@ class DotaBboxDataset(chainer.dataset.DatasetMixin):
             name = split_text[-2].lower().strip()
             labels.append(place_labels.index(name))
 
-        bbox = np.stack(bbox).astype(np.float32)
-        labels = np.stack(labels).astype(np.int32)
+        if len(bbox) != 0:
+            bbox = np.stack(bbox).astype(np.float32)
+        if len(labels) != 0:
+            labels = np.stack(labels).astype(np.int32)
+
         difficult = np.array(difficult, dtype=np.bool)
 
         # Load a image
