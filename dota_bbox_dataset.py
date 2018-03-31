@@ -1,11 +1,10 @@
-import os
 import warnings
 
 import chainer
 import numpy as np
 from chainercv.utils import read_image
 
-from dota_utils import place_labels
+from dota_utils import extract_annotations, extract_ids
 
 
 class DotaBboxDataset(chainer.dataset.DatasetMixin):
@@ -76,7 +75,7 @@ class DotaBboxDataset(chainer.dataset.DatasetMixin):
 
         fpath = f'{data_dir}/{split}/images'
 
-        self.ids = [os.path.splitext(id_)[0] for id_ in os.listdir(fpath)]
+        self.ids = extract_ids(fpath)
         self.data_dir = data_dir
         self.split = split
         self.use_difficult = use_difficult
@@ -101,54 +100,12 @@ class DotaBboxDataset(chainer.dataset.DatasetMixin):
 
         id_ = self.ids[i]
         print(id_)
+
         fname = f'{self.data_dir}/{self.split}/annotations/{id_}.txt'
+        bbox, labels, difficult = extract_annotations(fname, self.use_difficult)
 
-        with open(fname) as f:
-            lines = f.readlines()
-
-        if not lines[1].startswith('gsd:'):
-            Exception('no gsd')
-
-        difficult = []
-        bbox = []
-        labels = []
-
-        # for each object in the image.
-        for line in lines[2:]:
-            split_text = line.split(' ')
-
-            difficult_ = int(split_text[-1].strip())
-            if not self.use_difficult and difficult_ == 1:
-                continue
-            difficult.append(difficult_)
-
-            xs = []
-            ys = []
-            points = ('x1', 'y1', 'x2', 'y2', 'x3', 'y3', 'x4', 'y4')
-            for point, text in zip(points, split_text):
-                if point.startswith('x'):
-                    xs.append(int(text))
-                elif point.startswith('y'):
-                    ys.append(int(text))
-            # sort xs and ys to get max/min
-            sorted_x = sorted(xs)
-            sorted_y = sorted(ys)
-            min_x = sorted_x[0]
-            min_y = sorted_y[0]
-            max_x = sorted_x[3]
-            max_y = sorted_y[3]
-
-            # subtract 1 to make pixel indexes 0-based
-            bbox.append([min_y - 1, min_x - 1, max_y - 1, max_x - 1])
-
-            name = split_text[-2].lower().strip()
-            labels.append(place_labels.index(name))
-
-        if len(bbox) != 0:
-            bbox = np.stack(bbox).astype(np.float32)
-        if len(labels) != 0:
-            labels = np.stack(labels).astype(np.int32)
-
+        bbox = np.stack(bbox).astype(np.float32)
+        labels = np.stack(labels).astype(np.int32)
         difficult = np.array(difficult, dtype=np.bool)
 
         # Load a image
