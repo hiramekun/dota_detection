@@ -28,6 +28,18 @@ VALIDATE_INTERVAL = 10000
 SNAPSHOT_INTERVAL = 10000
 
 
+def arg_parser():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        '--model', choices=('ssd300', 'ssd512'), default='ssd300')
+    parser.add_argument('--batchsize', type=int, default=32)
+    parser.add_argument('--gpu', type=int, default=-1)
+    parser.add_argument('--out', default='result')
+    parser.add_argument('--resume')
+    args = parser.parse_args()
+    return args
+
+
 class MultiboxTrainChain(chainer.Chain):
     def __init__(self, model, alpha=1, k=3):
         super(MultiboxTrainChain, self).__init__()
@@ -104,16 +116,7 @@ class Transform(object):
         return img, mb_loc, mb_label
 
 
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        '--model', choices=('ssd300', 'ssd512'), default='ssd300')
-    parser.add_argument('--batchsize', type=int, default=32)
-    parser.add_argument('--gpu', type=int, default=-1)
-    parser.add_argument('--out', default='result')
-    parser.add_argument('--resume')
-    args = parser.parse_args()
-
+def main(args):
     if args.model == 'ssd300':
         model = SSD300(
             n_fg_class=len(place_labels),
@@ -181,4 +184,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    main(arg_parser())
